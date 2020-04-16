@@ -23,14 +23,18 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
         
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
-        collectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.identifier)
+        collectionView.register(MovieVerticalCell.self, forCellWithReuseIdentifier: MovieVerticalCell.identifier)
+        collectionView.register(MovieHorizontalCell.self, forCellWithReuseIdentifier: MovieHorizontalCell.identifier)
         collectionView.snp.makeConstraints{ make in
             make.top.left.bottom.right.equalToSuperview()
         }
     }
     
     override func cellIdentifier(_ cellViewModel: MovieCellViewModel) -> String {
-        return MovieCell.identifier
+        switch viewModel.category.value {
+        case .recommend: return MovieHorizontalCell.identifier
+        default: return MovieVerticalCell.identifier
+        }
     }
     
     override func configureCell(_ dataSource: CollectionDataSourceType, collectionView: UICollectionView, indexPath: IndexPath, cellViewModel: MovieCellViewModel) -> UICollectionViewCell {
@@ -44,7 +48,10 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
 extension CategoryListViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: collectionView.frame.size.width * 0.4, height: collectionView.frame.size.height)
+        switch viewModel.category.value {
+        case .recommend: return CGSize(width: collectionView.frame.size.width * 0.8, height: collectionView.frame.size.height)
+        default: return CGSize(width: collectionView.frame.size.width * 0.4, height: collectionView.frame.size.height)
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -53,5 +60,5 @@ extension CategoryListViewController: UICollectionViewDelegateFlowLayout {
 }
 
 class CategoryListViewModel: ListViewModel<MovieCellViewModel> {
-    
+    let category = BehaviorRelay<Category>(value: .none)
 }

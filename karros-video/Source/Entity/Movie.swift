@@ -9,7 +9,7 @@
 import Foundation
 import ObjectMapper
 
-fileprivate let baseImageURL = URL(string: "https://image.tmdb.org/t/p/w500/")!
+fileprivate let baseImageURL = URL(string: "https://image.tmdb.org/t/p/")!
 
 class Model: Mappable, Equatable {
     required convenience init?(map: Map) {
@@ -27,7 +27,13 @@ class Movie: Model {
     var id: Int = 0
     var posterPath: String = ""
     var posterURL: URL {
-        return baseImageURL.appendingPathComponent(posterPath)
+        return baseImageURL.appendingPathComponent("w400")
+            .appendingPathComponent(posterPath)
+    }
+    var backdropPath: String = ""
+    var backDropURL: URL {
+        return baseImageURL.appendingPathComponent("w500")
+            .appendingPathComponent(backdropPath)
     }
     var title: String = ""
     var overview: String = ""
@@ -36,8 +42,20 @@ class Movie: Model {
     override func mapping(map: Map) {
         id <- map["id"]
         posterPath <- map["poster_path"]
+        backdropPath <- map["backdrop_path"]
         title <- map["title"]
         overview <- map["overview"]
         releaseDate <- (map["release_date"], DateTransform())
     }
+}
+
+extension Movie: Hashable {
+    static func == (lhs: Movie, rhs: Movie) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.id)
+    }
+
 }

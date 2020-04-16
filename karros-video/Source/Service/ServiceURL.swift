@@ -48,7 +48,8 @@ enum ImdbRouter: URLRequestConvertible {
         let parameters: Parameters = [
             "api_key": ImdbRouter.apiKey,
             "page": page,
-            "language": "en-US"
+            "language": "en-US",
+            "region": "VN"
         ]
         
         let encoding = URLEncoding.queryString

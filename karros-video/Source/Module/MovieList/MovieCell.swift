@@ -13,10 +13,7 @@ import RxCocoa
 import SnapKit
 
 class MovieCell: BaseCollectionCell<MovieCellViewModel> {
-    
-    static let identifier = "MovieCell"
-    
-    private lazy var imgPoster: UIImageView = {
+    lazy var imgPoster: UIImageView = {
         let img = UIImageView()
         img.clipsToBounds = true
         img.contentMode = .scaleAspectFill
@@ -25,9 +22,9 @@ class MovieCell: BaseCollectionCell<MovieCellViewModel> {
         return img
     }()
     
-    private lazy var shadowView: UIImageView = {
+    lazy var shadowView: UIImageView = {
         let view = UIImageView()
-        view.backgroundColor = .black
+        view.backgroundColor = .white
         view.layer.masksToBounds = false
         view.layer.cornerRadius = 10
         view.layer.shadowColor = UIColor.black.cgColor
@@ -36,6 +33,15 @@ class MovieCell: BaseCollectionCell<MovieCellViewModel> {
         view.layer.shadowRadius = 5
         return view
     }()
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        shadowView.isHidden = true
+    }
+}
+
+class MovieVerticalCell: MovieCell {
+    static let identifier = "MovieVerticalCell"
     
     private lazy var lblTitle: UILabel = {
         let label = UILabel()
@@ -47,47 +53,71 @@ class MovieCell: BaseCollectionCell<MovieCellViewModel> {
     }()
     
     override func initialize() {
+        let wrapper = UIView()
+        addSubview(wrapper)
+        wrapper.addSubview(lblTitle)
         addSubview(shadowView)
         addSubview(imgPoster)
         
         imgPoster.snp.makeConstraints{ make in
             make.top.left.right.equalToSuperview()
         }
-        
         shadowView.snp.makeConstraints{ make in
             make.top.left.equalTo(imgPoster).offset(5)
             make.bottom.right.equalTo(imgPoster).offset(-5)
         }
-        
-        let wrapper = UIView()
-        addSubview(wrapper)
         
         wrapper.snp.makeConstraints{ make in
             make.top.equalTo(imgPoster.snp.bottom).offset(10)
             make.left.bottom.right.equalToSuperview()
             make.height.greaterThanOrEqualTo(40)
         }
-        wrapper.addSubview(lblTitle)
         lblTitle.snp.makeConstraints{ make in
             make.top.left.right.equalToSuperview()
         }
-    
     }
     
     override func bindViewAndViewModel() {
         lblTitle.text = viewModel.model.title
-        viewModel.image.filterNil()
+        viewModel.posterImage.filterNil()
+            .do(onNext:{ [unowned self] _ in self.shadowView.isHidden = false })
             .bind(to: imgPoster.rx.networkImage)
             .disposed(by: disposeBag)
     }
+}
+
+class MovieHorizontalCell: MovieCell {
+    static let identifier = "MovieHorizontalCell"
     
+    override func initialize() {
+        addSubview(shadowView)
+        addSubview(imgPoster)
+        
+        imgPoster.snp.makeConstraints{ make in
+            make.top.left.right.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-16)
+        }
+        shadowView.snp.makeConstraints{ make in
+            make.top.left.equalTo(imgPoster).offset(5)
+            make.bottom.right.equalTo(imgPoster).offset(-5)
+        }
+    }
+    
+    override func bindViewAndViewModel() {
+        
+        viewModel.backdropImage.filterNil()
+            .do(onNext:{ [unowned self] _ in self.shadowView.isHidden = false })
+            .bind(to: imgPoster.rx.networkImage)
+            .disposed(by: disposeBag)
+    }
 }
 
 class MovieCellViewModel: CellViewModel, HasModel {
     
     typealias ModelElement = Movie
     var model: Movie
-    var image = BehaviorRelay<NetworkImage?>(value: nil)
+    var posterImage = BehaviorRelay<NetworkImage?>(value: nil)
+    var backdropImage = BehaviorRelay<NetworkImage?>(value: nil)
     
     override var identity: String {
         return String(model.id)
@@ -95,6 +125,7 @@ class MovieCellViewModel: CellViewModel, HasModel {
     
     required init(model: Movie) {
         self.model = model
-        self.image.accept(NetworkImage(model.posterURL))
+        self.posterImage.accept(NetworkImage(model.posterURL))
+        self.backdropImage.accept(NetworkImage(model.backDropURL))
     }
 }

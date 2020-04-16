@@ -80,6 +80,10 @@ class MovieListViewController: BaseTableViewController<MovieListViewModel> {
     }
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 300
+        guard let cvm = viewModel.itemAt(indexPath) else { return 0 }
+        switch cvm.category.value {
+        case .recommend: return 230
+        default: return 340
+        }
     }
 }

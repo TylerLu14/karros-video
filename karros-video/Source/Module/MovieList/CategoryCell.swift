@@ -45,11 +45,12 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         super.bindViewAndViewModel()
         lblTitle.text = viewModel.category.value.rawValue.uppercased()
         
+        viewModel.category.bind(to: collectionVC.viewModel.category)
+            .disposed(by: disposeBag)
+        
         collectionVC.collectionView.rx.endReachX()
             .distinctUntilChanged()
             .filter{ $0 }
-            .withLatestFrom(viewModel.fetchItemAction.executing)
-            .filter{ !$0 }
             .map{ _ in () }
             .bind(to: viewModel.fetchItemAction.inputs)
             .disposed(by: disposeBag)
@@ -68,10 +69,13 @@ class CategoryCellViewModel: CellViewModel {
     let category = BehaviorRelay<Category>(value: .none)
     let movies = BehaviorRelay<[Movie]>(value: [])
     var currentPage = 1
+    var maxPage = 20
     
     lazy var fetchItemAction =  {
         return Action<Void,[Movie]> { [unowned self] page in
+            guard self.currentPage <= self.maxPage else { return .empty() }
             return self.service.getMovies(router: self.getRouter(category: self.category.value, page: self.currentPage))
+                .asObservable()
         }
     }()
     
@@ -85,7 +89,10 @@ class CategoryCellViewModel: CellViewModel {
         
         fetchItemAction.elements
             .subscribe(onNext: { [unowned self] fetchedMovies in
-                print(fetchedMovies.map{ $0.id })
+                guard fetchedMovies.count > 0 else {
+                    self.maxPage = self.currentPage - 1
+                    return
+                }
                 self.currentPage += 1
                 self.movies.accept(self.movies.value + fetchedMovies)
             })

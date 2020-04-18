@@ -15,8 +15,7 @@ enum Category: String {
     case topRated = "Top Rated"
     case upcoming = "Upcoming"
     static var allCategories: [Category] {
-        //return [.recommend, .popular, .topRated, .upcoming]
-        return [.upcoming]
+        return [.recommend, .popular, .topRated, .upcoming]
     }
 }
 

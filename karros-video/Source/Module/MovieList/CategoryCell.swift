@@ -32,7 +32,7 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         lblTitle.snp.makeConstraints{ make in
             make.left.equalToSuperview().offset(8)
             make.top.right.equalToSuperview()
-            make.height.equalTo(60)
+            make.height.equalTo(40)
         }
         
         collectionVC.view.snp.makeConstraints{ make in
@@ -48,7 +48,7 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         viewModel.category.bind(to: collectionVC.viewModel.category)
             .disposed(by: disposeBag)
         
-        collectionVC.collectionView.rx.endReachX()
+        collectionVC.collectionView.rx.endReachX(offset: -10)
             .distinctUntilChanged()
             .filter{ $0 }
             .map{ _ in () }

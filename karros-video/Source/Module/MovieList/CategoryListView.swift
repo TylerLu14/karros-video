@@ -23,8 +23,8 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
         
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
-        collectionView.register(MovieVerticalCell.self, forCellWithReuseIdentifier: MovieVerticalCell.identifier)
-        collectionView.register(MovieHorizontalCell.self, forCellWithReuseIdentifier: MovieHorizontalCell.identifier)
+        collectionView.register(LandscapeMovieCell.self, forCellWithReuseIdentifier: LandscapeMovieCell.identifier)
+        collectionView.register(PotraitMovieCell.self, forCellWithReuseIdentifier: PotraitMovieCell.identifier)
         collectionView.snp.makeConstraints{ make in
             make.top.left.bottom.right.equalToSuperview()
         }
@@ -32,8 +32,8 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
     
     override func cellIdentifier(_ cellViewModel: MovieCellViewModel) -> String {
         switch viewModel.category.value {
-        case .recommend: return MovieHorizontalCell.identifier
-        default: return MovieVerticalCell.identifier
+        case .recommend: return LandscapeMovieCell.identifier
+        default: return PotraitMovieCell.identifier
         }
     }
     

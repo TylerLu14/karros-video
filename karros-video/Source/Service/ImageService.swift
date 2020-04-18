@@ -31,7 +31,7 @@ extension ImageDownloader {
         return ImageDownloader(
             configuration: configuration,
             downloadPrioritization: .fifo,
-            maximumActiveDownloads: 10,
+            maximumActiveDownloads: 20,
             imageCache: imgCache
         )
     }()
@@ -47,7 +47,13 @@ extension UIImageView {
         set { objc_setAssociatedObject(self, &AssociatedKey.activeRequestReceipt, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
     
-    public func transition(_ imageTransition: ImageTransition, with image: Image) {
+    public func transition(_ imageTransition: ImageTransition, with image: Image?, contentMode: ContentMode) {
+        self.contentMode = contentMode
+        guard let image = image else {
+            self.image = nil
+            return
+        }
+        
         UIView.transition(
             with: self,
             duration: imageTransition.duration,
@@ -63,21 +69,31 @@ extension UIImageView {
 public struct NetworkImage {
     fileprivate let imageDownloader = ImageDownloader.default
     fileprivate let url: URL?
+    fileprivate let imageContentMode: UIView.ContentMode
     fileprivate let placeHolder: UIImage?
+    fileprivate let placeHolderContentMode: UIView.ContentMode
     fileprivate let transition: UIImageView.ImageTransition?
     
-    public init(_ url: URL?, placeholder: UIImage? = nil, transition: UIImageView.ImageTransition? = .noTransition) {
+    public init(_ url: URL?,
+                placeholder: UIImage? = nil,
+                transition: UIImageView.ImageTransition? = .crossDissolve(0.5),
+                imageContentMode: UIView.ContentMode = .scaleAspectFill,
+                placeHolderContentMode: UIView.ContentMode = .center) {
         self.url = url
         self.placeHolder = placeholder
         self.transition = transition
+        self.imageContentMode = imageContentMode
+        self.placeHolderContentMode = placeHolderContentMode
     }
 }
 
 public extension Reactive where Base: UIImageView {
     var networkImage: Binder<NetworkImage> {
         return Binder(self.base) { view, networkImage in
-            view.image = networkImage.placeHolder
-            guard let url = networkImage.url else { return }
+            guard let url = networkImage.url else {
+                view.image = networkImage.placeHolder
+                return
+            }
             
             let request = URLRequest(url: url)
             
@@ -87,7 +103,7 @@ public extension Reactive where Base: UIImageView {
             }
             
             if let image = ImageDownloader.default.imageCache?.image(for: request, withIdentifier: nil) {
-                view.transition(.noTransition, with: image)
+                view.transition(.noTransition, with: image, contentMode: networkImage.imageContentMode)
                 return
             }
             
@@ -97,9 +113,10 @@ public extension Reactive where Base: UIImageView {
                 completion: { response in
                     switch response.result {
                     case .failure(let error):
+                        view.transition(.crossDissolve(0.3), with: networkImage.placeHolder, contentMode: networkImage.placeHolderContentMode)
                         print(error)
                     case .success(let image):
-                        view.transition(.crossDissolve(0.3), with: image)
+                        view.transition(.crossDissolve(0.3), with: image, contentMode: networkImage.imageContentMode)
                     }
                     view.currentRequestReceipt = nil
                 }

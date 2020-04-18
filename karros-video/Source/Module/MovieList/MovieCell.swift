@@ -37,11 +37,12 @@ class MovieCell: BaseCollectionCell<MovieCellViewModel> {
     override func prepareForReuse() {
         super.prepareForReuse()
         shadowView.isHidden = true
+        imgPoster.image = nil
     }
 }
 
-class MovieVerticalCell: MovieCell {
-    static let identifier = "MovieVerticalCell"
+class PotraitMovieCell: MovieCell {
+    static let identifier = "PotraitMovieCell"
     
     private lazy var lblTitle: UILabel = {
         let label = UILabel()
@@ -52,12 +53,20 @@ class MovieVerticalCell: MovieCell {
         return label
     }()
     
+    private lazy var btnDetail: UIButton = {
+        let button = UIButton()
+        button.setImage(#imageLiteral(resourceName: "ic_detail"), for: .normal)
+        return button
+    }()
+    
     override func initialize() {
         let wrapper = UIView()
-        addSubview(wrapper)
         wrapper.addSubview(lblTitle)
-        addSubview(shadowView)
-        addSubview(imgPoster)
+        wrapper.addSubview(btnDetail)
+        
+        contentView.addSubview(shadowView)
+        contentView.addSubview(imgPoster)
+        contentView.addSubview(wrapper)
         
         imgPoster.snp.makeConstraints{ make in
             make.top.left.right.equalToSuperview()
@@ -68,12 +77,18 @@ class MovieVerticalCell: MovieCell {
         }
         
         wrapper.snp.makeConstraints{ make in
-            make.top.equalTo(imgPoster.snp.bottom).offset(10)
+            make.top.equalTo(imgPoster.snp.bottom).offset(8)
             make.left.bottom.right.equalToSuperview()
-            make.height.greaterThanOrEqualTo(40)
+            make.height.equalTo(40)
         }
         lblTitle.snp.makeConstraints{ make in
-            make.top.left.right.equalToSuperview()
+            make.top.equalToSuperview().offset(3)
+            make.left.equalToSuperview().offset(15)
+            make.right.equalTo(btnDetail.snp.left).offset(-5)
+        }
+        btnDetail.snp.makeConstraints{ make in
+            make.top.right.equalToSuperview()
+            make.width.equalTo(10)
         }
     }
     
@@ -86,8 +101,8 @@ class MovieVerticalCell: MovieCell {
     }
 }
 
-class MovieHorizontalCell: MovieCell {
-    static let identifier = "MovieHorizontalCell"
+class LandscapeMovieCell: MovieCell {
+    static let identifier = "LandscapeMovieCell"
     
     override func initialize() {
         addSubview(shadowView)
@@ -125,7 +140,7 @@ class MovieCellViewModel: CellViewModel, HasModel {
     
     required init(model: Movie) {
         self.model = model
-        self.posterImage.accept(NetworkImage(model.posterURL))
-        self.backdropImage.accept(NetworkImage(model.backDropURL))
+        self.posterImage.accept(NetworkImage(model.getPosterImageURL(size: .w342), placeholder: #imageLiteral(resourceName: "ic_image_placeholder")))
+        self.backdropImage.accept(NetworkImage(model.getBackdropImageURL(size: .w780), placeholder: #imageLiteral(resourceName: "ic_image_placeholder")))
     }
 }

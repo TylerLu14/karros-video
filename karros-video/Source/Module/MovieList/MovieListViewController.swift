@@ -83,7 +83,7 @@ class MovieListViewController: BaseTableViewController<MovieListViewModel> {
         guard let cvm = viewModel.itemAt(indexPath) else { return 0 }
         switch cvm.category.value {
         case .recommend: return 230
-        default: return 340
+        default: return 360
         }
     }
 }

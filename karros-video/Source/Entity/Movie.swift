@@ -23,18 +23,27 @@ class Model: Mappable, Equatable {
     }
 }
 
+enum PosterSize: String {
+    case w92 = "w92"
+    case w154 = "w154"
+    case w185 = "w185"
+    case w342 = "w342"
+    case w500 = "w500"
+    case w780 = "w780"
+    case original = "original"
+}
+
+enum BackdropSize: String {
+    case w300 = "w300"
+    case w780 = "w780"
+    case w1280 = "w1280"
+    case original = "original"
+}
+
 class Movie: Model {
     var id: Int = 0
     var posterPath: String = ""
-    var posterURL: URL {
-        return baseImageURL.appendingPathComponent("w400")
-            .appendingPathComponent(posterPath)
-    }
     var backdropPath: String = ""
-    var backDropURL: URL {
-        return baseImageURL.appendingPathComponent("w500")
-            .appendingPathComponent(backdropPath)
-    }
     var title: String = ""
     var overview: String = ""
     var releaseDate: Date = Date()
@@ -46,6 +55,18 @@ class Movie: Model {
         title <- map["title"]
         overview <- map["overview"]
         releaseDate <- (map["release_date"], DateTransform())
+    }
+    
+    func getPosterImageURL(size: PosterSize) -> URL {
+        return baseImageURL
+            .appendingPathComponent(size.rawValue)
+            .appendingPathComponent(posterPath)
+    }
+    
+    func getBackdropImageURL(size: BackdropSize) -> URL {
+        return baseImageURL
+            .appendingPathComponent(size.rawValue)
+            .appendingPathComponent(backdropPath)
     }
 }
 

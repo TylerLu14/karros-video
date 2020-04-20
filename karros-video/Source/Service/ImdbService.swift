@@ -79,6 +79,9 @@ class NetworkService {
 
 protocol IImdbService {
     func getMovies(router: ImdbRouter) -> Single<[Movie]>
+    func getMovieDetail(id: Int) -> Single<Movie>
+    func getMovieCredits(id: Int) -> Single<Credit>
+    func getRecommends(fromMovieId id: Int, page: Int) -> Single<[Movie]>
 }
 
 class ImdbService: NetworkService, IImdbService {
@@ -90,5 +93,35 @@ class ImdbService: NetworkService, IImdbService {
                 }
                 return results.compactMap{ Movie(JSON: $0) }
             }
+    }
+    
+    func getMovieDetail(id: Int) -> Single<Movie> {
+        return request(urlRequest: ImdbRouter.getMovieDetail(id: id))
+            .flatMap{ json in
+                guard let movie = Movie(JSON: json) else {
+                    return .error(ServiceError.cannotParseData)
+                }
+                return .just(movie)
+        }
+    }
+    
+    func getMovieCredits(id: Int) -> Single<Credit> {
+        return request(urlRequest: ImdbRouter.getCredits(id: id))
+            .flatMap{ json in
+                guard let credit = Credit(JSON: json) else {
+                    return .error(ServiceError.cannotParseData)
+                }
+                return .just(credit)
+        }
+    }
+    
+    func getRecommends(fromMovieId id: Int, page: Int) -> Single<[Movie]> {
+        return request(urlRequest: ImdbRouter.getReccomends(fromId: id, page: page))
+            .flatMap{ json in
+               guard let results = json["results"] as? [[String:Any]] else {
+                    return .error(ServiceError.cannotParseData)
+                }
+                return .just(results.compactMap{ Movie(JSON: $0) })
+        }
     }
 }

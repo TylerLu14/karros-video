@@ -20,7 +20,7 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         label.font = Font.helvetica.bold(withSize: 16)
         return label
     }()
-    let collectionVC = CategoryListViewController(viewModel: CategoryListViewModel())
+    let collectionVC = MoviesCollectionViewController(viewModel: MoviceCollectionViewModel())
     
     override func initialize() {
         super.initialize()
@@ -59,6 +59,11 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
             .map{ [unowned self] movies in self.collectionVC.viewModel.makeSources(movies) }
             .bind(to: collectionVC.viewModel.itemsSource)
             .disposed(by: disposeBag)
+        
+        collectionVC.viewModel.selectedItem
+            .map{ $0.model }
+            .bind(to: viewModel.selectedMovie)
+            .disposed(by: disposeBag)
     }
     
 }
@@ -68,6 +73,7 @@ class CategoryCellViewModel: CellViewModel {
     
     let category = BehaviorRelay<Category>(value: .none)
     let movies = BehaviorRelay<[Movie]>(value: [])
+    let selectedMovie = PublishRelay<Movie>()
     var currentPage = 1
     var maxPage = 20
     

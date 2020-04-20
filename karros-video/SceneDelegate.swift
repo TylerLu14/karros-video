@@ -21,9 +21,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let window = UIWindow(windowScene: windowScene)
         let navigationController = UINavigationController()
-        let movieListVC = MovieListViewController(
-            viewModel: MovieListViewModel(),
-            navigator: MovieListNavigator(navigationController: navigationController)
+        let movieListVC = MovieMasterListViewController(
+            viewModel: MovieMasterListViewModel(),
+            navigator: MovieMasterListNavigator(navigationController: navigationController)
         )
         navigationController.setViewControllers([movieListVC], animated: true)
         window.rootViewController = navigationController

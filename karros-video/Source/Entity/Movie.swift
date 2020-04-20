@@ -9,19 +9,7 @@
 import Foundation
 import ObjectMapper
 
-fileprivate let baseImageURL = URL(string: "https://image.tmdb.org/t/p/")!
-
-class Model: Mappable, Equatable {
-    required convenience init?(map: Map) {
-        self.init()
-    }
-    
-    func mapping(map: Map) { }
-    
-    static func == (lhs: Model, rhs: Model) -> Bool {
-        return false
-    }
-}
+let baseImageURL = URL(string: "https://image.tmdb.org/t/p/")!
 
 enum PosterSize: String {
     case w92 = "w92"

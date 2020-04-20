@@ -18,6 +18,9 @@ enum ImdbRouter: URLRequestConvertible {
     case getPopular(page: Int)
     case getTopRated(page: Int)
     case getUpcoming(page: Int)
+    case getMovieDetail(id: Int)
+    case getCredits(id: Int)
+    case getReccomends(fromId: Int, page: Int)
     
     var path: String {
         switch self {
@@ -25,16 +28,26 @@ enum ImdbRouter: URLRequestConvertible {
         case .getPopular: return "popular"
         case .getTopRated: return "top_rated"
         case .getUpcoming: return "upcoming"
+        case .getMovieDetail(let id): return "\(id)"
+        case .getCredits(let id): return "\(id)/credits"
+        case .getReccomends(let id, _): return "\(id)/recommendations"
         }
     }
     
-    var page: Int {
+    var parameters: Parameters {
+        var parameters: Parameters = [
+            "api_key": ImdbRouter.apiKey,
+            "language": "en-US",
+        ]
+        
         switch self {
-        case .getNowPlaying(let page): return page
-        case .getPopular(let page): return page
-        case .getTopRated(let page): return page
-        case .getUpcoming(let page): return page
+        case .getNowPlaying(let page), .getPopular(let page), .getTopRated(let page), .getUpcoming(let page), .getReccomends( _, let page):
+            parameters["page"] = page
+        case .getMovieDetail, .getCredits:
+            break
         }
+        
+        return parameters
     }
     
     var url: URL {
@@ -44,14 +57,6 @@ enum ImdbRouter: URLRequestConvertible {
     func asURLRequest() throws -> URLRequest {
         var request = URLRequest(url: url)
         request.method = .get
-        
-        let parameters: Parameters = [
-            "api_key": ImdbRouter.apiKey,
-            "page": page,
-            "language": "en-US",
-        ]
-        
-        let encoding = URLEncoding.queryString
-        return try encoding.encode(request, with: parameters)
+        return try URLEncoding.queryString.encode(request, with: parameters)
     }
 }

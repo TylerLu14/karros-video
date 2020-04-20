@@ -19,7 +19,7 @@ enum Category: String {
     }
 }
 
-class MovieListViewModel: ListViewModel<CategoryCellViewModel> {
+class MovieMasterListViewModel: ListViewModel<CategoryCellViewModel> {
     
     override func react() {
         super.react()

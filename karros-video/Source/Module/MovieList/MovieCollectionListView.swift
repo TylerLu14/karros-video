@@ -12,7 +12,7 @@ import RxSwift
 import RxCocoa
 import Action
 
-class CategoryListViewController: BaseCollectionViewController<CategoryListViewModel> {
+class MoviesCollectionViewController: BaseCollectionViewController<MoviceCollectionViewModel> {
     override func setupLayout() {
         super.setupLayout()
         (layout as? UICollectionViewFlowLayout)?.scrollDirection = .horizontal
@@ -30,6 +30,10 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
         }
     }
     
+    override func bindViewAndViewModel() {
+        super.bindViewAndViewModel()
+    }
+    
     override func cellIdentifier(_ cellViewModel: MovieCellViewModel) -> String {
         switch viewModel.category.value {
         case .recommend: return LandscapeMovieCell.identifier
@@ -45,7 +49,7 @@ class CategoryListViewController: BaseCollectionViewController<CategoryListViewM
     }
 }
 
-extension CategoryListViewController: UICollectionViewDelegateFlowLayout {
+extension MoviesCollectionViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         switch viewModel.category.value {
@@ -59,6 +63,6 @@ extension CategoryListViewController: UICollectionViewDelegateFlowLayout {
     }
 }
 
-class CategoryListViewModel: ListViewModel<MovieCellViewModel> {
+class MoviceCollectionViewModel: ListViewModel<MovieCellViewModel> {
     let category = BehaviorRelay<Category>(value: .none)
 }

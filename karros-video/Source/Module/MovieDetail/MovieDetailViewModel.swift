@@ -7,10 +7,15 @@
 //
 
 import Foundation
+import RxSwift
+import RxCocoa
 
 class MovieDetailViewModel: BaseViewModel , HasModel {
     typealias ModelElement = Movie
     let model: Movie
+    
+    var posterImage = BehaviorRelay<NetworkImage?>(value: nil)
+    var backdropImage = BehaviorRelay<NetworkImage?>(value: nil)
     
     required init(model: Movie) {
         self.model = model
@@ -18,5 +23,8 @@ class MovieDetailViewModel: BaseViewModel , HasModel {
     
     override func react() {
         super.react()
+        
+        self.posterImage.accept(NetworkImage(model.getPosterImageURL(size: .w342), placeholder: #imageLiteral(resourceName: "ic_image_placeholder")))
+        self.backdropImage.accept(NetworkImage(model.getBackdropImageURL(size: .w780), placeholder: #imageLiteral(resourceName: "ic_image_placeholder")))
     }
 }

@@ -22,6 +22,12 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         return img
     }()
     
+    lazy var btnPlay: UIButton = {
+        let button = UIButton()
+        button.setImage(#imageLiteral(resourceName: "ic_play"), for: .normal)
+        return button
+    }()
+    
     lazy var imgPoster: UIImageView = {
         let img = UIImageView()
         img.layer.cornerRadius = 10
@@ -141,11 +147,17 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         scrollView.addSubview(shadowView)
         scrollView.addSubview(imgPoster)
         scrollView.addSubview(lblRating)
+        scrollView.addSubview(btnPlay)
         
         imgBackdrop.snp.makeConstraints{ make in
             make.top.left.equalToSuperview()
             make.width.equalToSuperview()
             make.height.equalTo(imgBackdrop.snp.width).dividedBy(1.6)
+        }
+        
+        btnPlay.snp.makeConstraints{ make in
+            make.center.equalTo(imgBackdrop.snp.center)
+            make.size.equalTo(80)
         }
         
         imgPoster.snp.makeConstraints{ make in
@@ -195,10 +207,29 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
             make.height.equalTo(30)
         }
         
+        let titleStack = UIStackView(arrangedSubviews: [lblTitle, lblOverview])
+        titleStack.axis = .vertical
+        titleStack.layoutMargins = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        titleStack.isLayoutMarginsRelativeArrangement = true
+        
+        let castStack = UIStackView(arrangedSubviews: [lblCast])
+        castStack.axis = .vertical
+        castStack.layoutMargins = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        castStack.isLayoutMarginsRelativeArrangement = true
+        
+        let recommendStack = UIStackView(arrangedSubviews: [lbRecommendation])
+        recommendStack.axis = .vertical
+        recommendStack.layoutMargins = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        recommendStack.isLayoutMarginsRelativeArrangement = true
+        
         let stackView = UIStackView(arrangedSubviews: [
-            lblTitle, lblOverview, btnFavourite,
-            lblCast, vcCasts.view,
-            lbRecommendation, vcRecommends.view])
+            titleStack,
+            btnFavourite,
+            castStack,
+            vcCasts.view,
+            recommendStack,
+            vcRecommends.view])
+        
         addChild(vcCasts)
         addChild(vcRecommends)
         vcCasts.view.snp.makeConstraints{ make in
@@ -208,7 +239,7 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
             make.height.equalTo(280)
         }
         scrollView.addSubview(stackView)
-        stackView.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 0, right: 20)
+        stackView.layoutMargins = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.spacing = 40
         stackView.axis = .vertical

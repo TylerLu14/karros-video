@@ -1,5 +1,7 @@
 ## Summary
-Karros's Interview Challenge Project
+Karros's Coding Challenge
+Interviewee: Hoang Lu
+Email: tyler.lu1401@gmail.com
 
 ## Prerequisites
 * XCode 11.3.
@@ -24,6 +26,17 @@ Karros's Interview Challenge Project
 
 Features
 =======
+
+## Design Pattern
+
+```swift
+// swift-tools-version:5.0
+
+class BaseCollectionViewController<VM: GenericListViewModel>
+class BaseViewController<VM: GenericViewModel>
+class BaseTableViewController<VM: GenericListViewModel>
+```
+
 
 **Core features:**
  - 8 different chart types

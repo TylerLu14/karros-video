@@ -266,7 +266,7 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         super.bindViewAndViewModel()
         
         btnBack.rx.tap
-            .subscribe(onNext: { _ in self.dismiss(animated: true) })
+            .subscribe(onNext: { [unowned self] _ in self.dismiss(animated: true) })
             .disposed(by: disposeBag)
         
         lblRating.text = "\(viewModel.model.voteAverage/2)"

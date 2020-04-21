@@ -28,6 +28,54 @@ enum BackdropSize: String {
     case original = "original"
 }
 
+enum Genre: Int {
+    case action = 28
+    case adventure = 12
+    case animation = 16
+    case comedy = 35
+    case crime = 80
+    case documentary = 99
+    case drama = 18
+    case family = 10751
+    case fantasy = 14
+    case history = 36
+    case horror = 27
+    case music = 10402
+    case mystery = 9648
+    case romance = 10749
+    case scifi = 878
+    case tv = 10770
+    case thriller = 53
+    case war = 10752
+    case western = 37
+}
+
+extension Genre: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .action: return "Action"
+        case .adventure: return "Adventure"
+        case .animation: return "Animation"
+        case .comedy: return "Comedy"
+        case .crime: return "Crime"
+        case .documentary: return "Documentary"
+        case .drama: return "Drama"
+        case .family: return "Family"
+        case .fantasy: return "Fantasy"
+        case .history: return "History"
+        case .horror: return "Horror"
+        case .music: return "Music"
+        case .mystery: return "Mystery"
+        case .romance: return "Romance"
+        case .scifi: return "Science Fiction"
+        case .tv: return "TV Movie"
+        case .thriller: return "Thriller"
+        case .war: return "War"
+        case .western: return "Western"
+        }
+    }
+}
+
 class Movie: Model {
     var id: Int = 0
     var posterPath: String = ""
@@ -35,6 +83,17 @@ class Movie: Model {
     var title: String = ""
     var overview: String = ""
     var releaseDate: Date = Date()
+    var voteAverage: Float = 0
+    var genres: [Genre] = []
+    
+    var page: Int = 0
+    
+    var releaseDateString: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en-US")
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: releaseDate)
+    }
     
     override func mapping(map: Map) {
         id <- map["id"]
@@ -43,6 +102,12 @@ class Movie: Model {
         title <- map["title"]
         overview <- map["overview"]
         releaseDate <- (map["release_date"], DateTransform())
+        voteAverage <- map["vote_average"]
+        genres <- map["genre_ids"]
+    }
+    
+    static func == (lhs: Movie, rhs: Movie) -> Bool {
+        return lhs.id == rhs.id
     }
     
     func getPosterImageURL(size: PosterSize) -> URL {
@@ -58,13 +123,4 @@ class Movie: Model {
     }
 }
 
-extension Movie: Hashable {
-    static func == (lhs: Movie, rhs: Movie) -> Bool {
-        return lhs.id == rhs.id
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(self.id)
-    }
 
-}

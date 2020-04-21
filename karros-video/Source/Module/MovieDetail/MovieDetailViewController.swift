@@ -44,13 +44,15 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
     
     lazy var lblRating: UILabel = {
         let label = UILabel()
-        label.font = Font.helvetica.normal(withSize: 14)
+        label.font = Font.helvetica.bold(withSize: 22)
+        label.textColor = #colorLiteral(red: 0.9450980392, green: 0.7921568627, blue: 0.137254902, alpha: 1)
         return label
     }()
     
     lazy var imgStars: [UIImageView] = {
         return (0..<5).map{ _ in
             let imgStar = UIImageView()
+            imgStar.image = #imageLiteral(resourceName: "ic_star_filled")
             imgStar.contentMode = .scaleAspectFit
             return imgStar
         }
@@ -59,7 +61,19 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
     lazy var lblReleaseDate: UILabel = {
         let label = UILabel()
         label.font = Font.helvetica.normal(withSize: 14)
+        label.textColor = .gray
         return label
+    }()
+    
+    lazy var lblGenres: [UILabel] = {
+        return (0..<2).map{ _ in
+            let label = UILabel()
+            label.font = Font.helvetica.normal(withSize: 14)
+            label.backgroundColor = .systemBlue
+            label.textColor = .white
+            label.isHidden = true
+            return label
+        }
     }()
     
     lazy var lblTitle: UILabel = {
@@ -112,8 +126,8 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
     override func initialize() {
         super.initialize()
         
-        view.backgroundColor = .white
-        
+        view.backgroundColor = #colorLiteral(red: 0.9725490196, green: 0.9725490196, blue: 0.9725490196, alpha: 1)
+
         view.addSubview(btnBack)
         btnBack.snp.makeConstraints{ make in
             make.top.equalToSuperview().offset(40)
@@ -126,6 +140,7 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         scrollView.addSubview(imgBackdrop)
         scrollView.addSubview(shadowView)
         scrollView.addSubview(imgPoster)
+        scrollView.addSubview(lblRating)
         
         imgBackdrop.snp.makeConstraints{ make in
             make.top.left.equalToSuperview()
@@ -144,6 +159,42 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
             make.bottom.right.equalTo(imgPoster).offset(-5)
         }
         
+        let stackStars = UIStackView(arrangedSubviews: [lblRating] + imgStars)
+        scrollView.addSubview(stackStars)
+        stackStars.spacing = 8
+        stackStars.axis = .horizontal
+        stackStars.alignment = .center
+        stackStars.distribution = .fill
+        stackStars.snp.makeConstraints{ make in
+            make.left.equalTo(imgPoster.snp.right).offset(10)
+            make.top.equalTo(imgBackdrop.snp.bottom).offset(10)
+            make.height.equalTo(25)
+        }
+        
+        imgStars.forEach{ star in
+            star.snp.makeConstraints{ make in
+                make.width.height.equalTo(20)
+            }
+        }
+        
+        scrollView.addSubview(lblReleaseDate)
+        lblReleaseDate.snp.makeConstraints{ make in
+            make.left.equalTo(imgPoster.snp.right).offset(10)
+            make.top.equalTo(stackStars.snp.bottom)
+        }
+        
+        let stackGenres = UIStackView(arrangedSubviews: lblGenres)
+        scrollView.addSubview(stackGenres)
+        stackGenres.spacing = 8
+        stackGenres.axis = .horizontal
+        stackGenres.alignment = .fill
+        stackGenres.distribution = .fill
+        stackGenres.snp.makeConstraints{ make in
+            make.left.equalTo(imgPoster.snp.right).offset(10)
+            make.top.equalTo(lblReleaseDate.snp.bottom).offset(5)
+            make.height.equalTo(30)
+        }
+        
         let stackView = UIStackView(arrangedSubviews: [
             lblTitle, lblOverview, btnFavourite,
             lblCast, vcCasts.view,
@@ -159,7 +210,7 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         scrollView.addSubview(stackView)
         stackView.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 0, right: 20)
         stackView.isLayoutMarginsRelativeArrangement = true
-        stackView.spacing = 20
+        stackView.spacing = 40
         stackView.axis = .vertical
         stackView.snp.makeConstraints{ make in
             make.top.equalTo(imgPoster.snp.bottom)
@@ -171,6 +222,44 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         scrollView.snp.makeConstraints{ make in
             make.edges.equalToSuperview()
         }
+        
+        //white backgrounds
+        let bgCasts = UIView()
+        scrollView.insertSubview(bgCasts, at: 0)
+        bgCasts.backgroundColor = .white
+        bgCasts.snp.makeConstraints{ make in
+            make.top.bottom.equalTo(vcCasts.view).inset(-20)
+            make.left.equalToSuperview()
+            make.width.equalToSuperview()
+        }
+        
+        let bgRecommends = UIView()
+        scrollView.insertSubview(bgRecommends, at: 0)
+        bgRecommends.backgroundColor = .white
+        bgRecommends.snp.makeConstraints{ make in
+            make.top.bottom.equalTo(vcRecommends.view).inset(-20)
+            make.left.equalToSuperview()
+            make.width.equalToSuperview()
+        }
+        
+        let bgBackdrop = UIView()
+        scrollView.insertSubview(bgBackdrop, at: 0)
+        bgBackdrop.backgroundColor = .white
+        bgBackdrop.snp.makeConstraints{ make in
+            make.top.equalTo(imgBackdrop)
+            make.bottom.equalTo(btnFavourite).inset(-20)
+            make.left.equalToSuperview()
+            make.width.equalToSuperview()
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        lblGenres.forEach{ lbl in
+            lbl.clipsToBounds = true
+            lbl.layer.cornerRadius = lbl.bounds.height/2
+        }
     }
     
     override func bindViewAndViewModel() {
@@ -179,6 +268,21 @@ class MovieDetailViewController: BaseViewController<MovieDetailViewModel> {
         btnBack.rx.tap
             .subscribe(onNext: { _ in self.dismiss(animated: true) })
             .disposed(by: disposeBag)
+        
+        lblRating.text = "\(viewModel.model.voteAverage/2)"
+        imgStars.enumerated().forEach{ index, star in
+            star.image = index < Int((viewModel.model.voteAverage/2).rounded()) ? #imageLiteral(resourceName: "ic_star_filled") : #imageLiteral(resourceName: "ic_star_unfilled")
+        }
+        lblReleaseDate.text = viewModel.model.releaseDateString
+        
+        lblGenres.forEach{ $0.isHidden = true }
+        viewModel.model
+            .genres[0..<min(viewModel.model.genres.count,lblGenres.count)]
+            .enumerated()
+            .forEach{ index, genre in
+                lblGenres[index].text = "   \(genre.description)   "
+                lblGenres[index].isHidden = false
+            }
         
         lblTitle.text = viewModel.model.title.uppercased()
         lblOverview.text = viewModel.model.overview

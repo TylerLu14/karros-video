@@ -135,7 +135,7 @@ class MovieCellViewModel: CellViewModel, HasModel {
     var backdropImage = BehaviorRelay<NetworkImage?>(value: nil)
     
     override var identity: String {
-        return String(model.id)
+        return String(model.id) + String(model.page)
     }
     
     required init(model: Movie) {

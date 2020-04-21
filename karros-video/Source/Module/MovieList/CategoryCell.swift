@@ -20,6 +20,14 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         label.font = Font.helvetica.bold(withSize: 16)
         return label
     }()
+    
+    lazy var imgArrow: UIImageView = {
+        let img = UIImageView()
+        img.image = #imageLiteral(resourceName: "ic_arrow")
+        img.contentMode = .scaleAspectFit
+        return img
+    }()
+    
     let collectionVC = MoviesCollectionViewController(viewModel: MoviceCollectionViewModel())
     
     override func initialize() {
@@ -28,11 +36,19 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
         
         contentView.addSubview(collectionVC.view)
         contentView.addSubview(lblTitle)
+        contentView.addSubview(imgArrow)
         
         lblTitle.snp.makeConstraints{ make in
             make.left.equalToSuperview().offset(8)
-            make.top.right.equalToSuperview()
+            make.top.equalToSuperview()
             make.height.equalTo(40)
+        }
+        
+        imgArrow.snp.makeConstraints{ make in
+            make.centerY.equalTo(lblTitle.snp.centerY)
+            make.left.equalTo(lblTitle.snp.right)
+            make.right.equalToSuperview().inset(20)
+            make.size.equalTo(22)
         }
         
         collectionVC.view.snp.makeConstraints{ make in
@@ -60,6 +76,15 @@ class CategoryCell: BaseTableCell<CategoryCellViewModel> {
             .bind(to: collectionVC.viewModel.itemsSource)
             .disposed(by: disposeBag)
         
+        viewModel.refreshAction.elements
+            .asDriver{ _ in .empty() }
+            .drive(onNext: { [collectionVC] _ in
+                collectionVC.collectionView.scrollToItem(
+                    at: IndexPath(row: 0, section: 0),
+                    at: .left, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
         collectionVC.viewModel.selectedItem
             .map{ $0.model }
             .bind(to: viewModel.selectedMovie)
@@ -76,6 +101,14 @@ class CategoryCellViewModel: CellViewModel {
     let selectedMovie = PublishRelay<Movie>()
     var currentPage = 1
     var maxPage = 20
+    
+    lazy var refreshAction =  {
+        return Action<Void?,[Movie]> { [unowned self] page in
+            self.currentPage = 1
+            return self.service.getMovies(router: self.getRouter(category: self.category.value, page: self.currentPage))
+            .asObservable()
+        }
+    }()
     
     lazy var fetchItemAction =  {
         return Action<Void,[Movie]> { [unowned self] page in
@@ -99,8 +132,21 @@ class CategoryCellViewModel: CellViewModel {
                     self.maxPage = self.currentPage - 1
                     return
                 }
+                fetchedMovies.forEach{ $0.page = self.currentPage }
                 self.currentPage += 1
                 self.movies.accept(self.movies.value + fetchedMovies)
+            })
+            .disposed(by: disposeBag)
+        
+        refreshAction.elements
+            .subscribe(onNext: { [unowned self] fetchedMovies in
+                guard fetchedMovies.count > 0 else {
+                    self.maxPage = self.currentPage - 1
+                    return
+                }
+                fetchedMovies.forEach{ $0.page = self.currentPage }
+                self.currentPage += 1
+                self.movies.accept(fetchedMovies)
             })
             .disposed(by: disposeBag)
     }

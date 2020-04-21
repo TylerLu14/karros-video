@@ -21,6 +21,7 @@ enum ImdbRouter: URLRequestConvertible {
     case getMovieDetail(id: Int)
     case getCredits(id: Int)
     case getReccomends(fromId: Int, page: Int)
+    case getReviews(id: Int, page: Int)
     
     var path: String {
         switch self {
@@ -31,6 +32,7 @@ enum ImdbRouter: URLRequestConvertible {
         case .getMovieDetail(let id): return "\(id)"
         case .getCredits(let id): return "\(id)/credits"
         case .getReccomends(let id, _): return "\(id)/recommendations"
+        case .getReviews(let id, _): return "\(id)/reviews"
         }
     }
     
@@ -41,7 +43,7 @@ enum ImdbRouter: URLRequestConvertible {
         ]
         
         switch self {
-        case .getNowPlaying(let page), .getPopular(let page), .getTopRated(let page), .getUpcoming(let page), .getReccomends( _, let page):
+        case .getNowPlaying(let page), .getPopular(let page), .getTopRated(let page), .getUpcoming(let page), .getReccomends( _, let page), .getReviews(_, let page):
             parameters["page"] = page
         case .getMovieDetail, .getCredits:
             break

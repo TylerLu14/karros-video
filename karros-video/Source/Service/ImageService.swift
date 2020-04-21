@@ -109,7 +109,7 @@ public extension Reactive where Base: UIImageView {
             
             view.currentRequestReceipt = ImageDownloader.default.download(
                 URLRequest(url: url), receiptID: UUID().uuidString, filter: nil, progress: nil,
-                progressQueue: DispatchQueue.main,
+                progressQueue: DispatchQueue.global(qos: .userInteractive),
                 completion: { response in
                     switch response.result {
                     case .failure(let error):

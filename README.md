@@ -52,7 +52,7 @@ class ListViewModel: { }
   * And, `BaseViewController` consists a view model of type `BaseViewModel`
   * The only job left is to subclass and reuse. I can forget about tableView and collectionView delegates.
  
- ### Other Patters:
+ ### Other Patterns:
  * Singletons for shared resources: Scheduler, DependencyManager
  * Factory to manage fonts
 

@@ -28,117 +28,157 @@ Features
 =======
 
 ## Design Pattern
+ ### MVVM
+ * MVVM is the base of this whole project.
+ * Why MVVM?
+  * I need an architecture to seperate UIs and Logic codes
+  * MVVM works with this kind of project size 
+  * MVVM is my most familiar architecture
+ 
+ * How MVVM is implemented?
+  * I have a set of base view controllers and base view model to subclass from
 
 ```swift
-// swift-tools-version:5.0
+//Base View Controllers
+class BaseViewController<VM: GenericViewModel> { }
+class BaseCollectionViewController<VM: GenericListViewModel> { }
+class BaseTableViewController<VM: GenericListViewModel> { }
 
-class BaseCollectionViewController<VM: GenericListViewModel>
-class BaseViewController<VM: GenericViewModel>
-class BaseTableViewController<VM: GenericListViewModel>
+//Base View Models 
+class BaseViewModel: { }
+class ListViewModel: { }
 ```
+  * So, `BaseCollectionViewController` and `BaseTableViewController` consist a list view model of type `ListViewModel`
+  * And, `BaseViewController` consists a view model of type `BaseViewModel`
+  * The only job left is to subclass and reuse. I can forget about tableView and collectionView delegates.
+ 
+ ### Other Patters:
+ * Singletons for shared resources: Scheduler, DependencyManager
+ * Factory to manage fonts
 
+## RxSwift, RxCocoa, RxDataSource and Action:
+* Since, I am using MVVM. This pattern works well with Reactive-Programming style.
+* RxSwift and RxCocoa helps with data binding
+* RxDataSource helps with collection binding
+* Action handles API calls, disables UIControl on while executing, return errors and maintains observable sreams
 
-**Core features:**
- - 8 different chart types
- - Scaling on both axes (with touch-gesture, axes separately or pinch-zoom)
- - Dragging / Panning (with touch-gesture)
- - Combined-Charts (line-, bar-, scatter-, candle-stick-, bubble-)
- - Dual (separate) Axes
- - Customizable Axes (both x- and y-axis)
- - Highlighting values (with customizable popup-views)
- - Save chart to camera-roll / export to PNG/JPEG
- - Predefined color templates
- - Legends (generated automatically, customizable)
- - Animations (build up animations, on both x- and y-axis)
- - Limit lines (providing additional information, maximums, ...)
- - Fully customizable (paints, typefaces, legends, colors, background, gestures, dashed lines, ...)
- - Plotting data directly from [**Realm.io**](https://realm.io) mobile database ([here](https://github.com/danielgindi/ChartsRealm))
+## Some Best Practises:
+### Network Layer:
+ 1. I created a Router to get and manage the API URL
+ ```swift
+ // ImdbRouter.swift
+ enum ImdbRouter: URLRequestConvertible {
+    static let baseURLString = "https://api.themoviedb.org/3/movie/"
+    static let apiKey = "a7b3c9975791294647265c71224a88ad"
+    
+    case getNowPlaying(page: Int)
+    case getPopular(page: Int)
+    case getTopRated(page: Int)
+    case getUpcoming(page: Int)
+    case getMovieDetail(id: Int)
+    case getCredits(id: Int)
+    case getReccomends(fromId: Int, page: Int)
+    case getReviews(id: Int, page: Int)
+    //...
+    func asURLRequest() throws -> URLRequest {
+        var request = URLRequest(url: url)
+        request.method = .get
+        return try URLEncoding.queryString.encode(request, with: parameters)
+    }
+ }
+ ```
+ 
+ 2. I created a wrapper for Alamofire to works with RxSwift. With this i can subscribe for result or error whenever I want.  This runs on background scheduler by default to avoid freezing UIs while requesting for data
+ ```swift 
+ //  ImdbService.swift
+ func request(urlRequest: URLRequestConvertible) -> Single<[String:Any]> {
+        return Single<[String:Any]>.create{ single in
+            let request = self.networkManager.alamofireSession.request(urlRequest)
+            request.responseJSON{ response in
+                if let error = response.error {
+                    single(.error(error))
+                }
+                
+                switch response.result {
+                case .failure(let error):
+                    single(.error(error))
+                case .success(let json):
+                    guard let json = json as? [String:Any] else {
+                        single(.error(ServiceError.cannotParseData))
+                        break
+                    }
+                    single(.success(json))
+                }
+            }
+            
+            return Disposables.create{ request.cancel() }
+        }
+        .subscribeOn(scheduler.backgroundScheduler)
+ ```
+ 3. Image download and image cache. Below is the image cache configuration (50MB on RAM, 100MB on disk).
+ ```swift
+ //  ImageService.swift
+ let imgCache = AutoPurgingImageCache(
+     memoryCapacity: 50_000_000,
+     preferredMemoryUsageAfterPurge: 20_000_000
+ )  
+ let diskCache =  URLCache(
+     memoryCapacity: 0,
+     diskCapacity: 100 * 1024 * 1024,
+     diskPath: "alamofireimage_disk_cache"
+ }
+ ```
+ I also created a struct called `NetworkImage` to support easy binding. Later on, all I have to do is create a NetworkImage with the desire url and bind that to UIImageView just like this
+ ```swift
+ //  MovieCell.swift    
+ let posterImage = BehaviorRelay<NetworkImage?>(value: nil)
+ posterImage.accept(NetworkImage(model.getPosterImageURL(size: .w342), placeholder: #imageLiteral(resourceName: "ic_image_placeholder")))
+ //Bind to imageView
+ posterImage.filterNil()
+    .bind(to: imgPoster.rx.networkImage)
+    .disposed(by: disposeBag)
+ ```
+ All the download and cache will be handled automatically. `NetworkImage` also supports image placeholder in case the image cannot be donwloaded
+ 
+ 4. Imdb poster, profile image, backdrop vary in different sizes. Why not support it all?
+ ```swift
+ //  Movie.swift
+ let baseImageURL = URL(string: "https://image.tmdb.org/t/p/")!
+ enum PosterSize: String {
+    case w92 = "w92"
+    case w154 = "w154"
+    case w185 = "w185"
+    case w342 = "w342"
+    case w500 = "w500"
+    case w780 = "w780"
+    case original = "original"
+ }
+ func getPosterImageURL(size: PosterSize) -> URL { }
+ ```
 
-**Chart types:**
+### Dependency injection:
+ * With a simple implementation of `DependencyManager`, I can inject network service on any class. For example, 
+ ```swift
+   //  CategoryCell.swift
+   let service: IImdbService
+   init(category: Category, service: IImdbService = dependencyManager.getService()) {
+        self.service = service
+        self.category.accept(category)
+   }
+ ```
+ * This may help in case I want to unit-test or run mockup APIs on the scale of whole project
 
-*Screenshots are currently taken from the original repository, as they render exactly the same :-)*
+### UIs in codes:
+* I prefer having my UI elementes written in codes not storyboard because merging Storyboard codes is not for human.
+* SnapKit supports me well on laying out and constraints UI elements
+* I found it's faster to  code my UIs than dragging and droppping to storyboard.
 
+### Memory management:
+* For me, memory management is the most important part when it comes to mobile application.
+* CollectionView and TableView should release resources (mostly images) at the right time to keep memory compsumption to the lowest
+* Since RxSwift is in user. Memory leak could be a problem. When any viewcontroller is dismissed, I have to make sure its instance is deallocated.
 
- - **LineChart (with legend, simple design)**
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/simpledesign_linechart4.png)
- - **LineChart (with legend, simple design)**
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/simpledesign_linechart3.png)
+### Load more and pull to refresh:
+* Simple swift down to the end of each row to load more movies.
+* Pull to refresh is best to test by: open the app without internet, you will see an empty movie list, connect to the internet and pull to refresh.
 
- - **LineChart (cubic lines)**
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/cubiclinechart.png)
-
- - **LineChart (gradient fill)**
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/line_chart_gradient.png)
-
- - **Combined-Chart (bar- and linechart in this case)**
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/combined_chart.png)
-
- - **BarChart (with legend, simple design)**
-
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/simpledesign_barchart3.png)
-
- - **BarChart (grouped DataSets)**
-
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/groupedbarchart.png)
-
- - **Horizontal-BarChart**
-
-![alt tag](https://raw.github.com/PhilJay/MPChart/master/screenshots/horizontal_barchart.png)
-
-
- - **PieChart (with selection, ...)**
-
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/simpledesign_piechart1.png)
-
- - **ScatterChart** (with squares, triangles, circles, ... and more)
-
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/scatterchart.png)
-
- - **CandleStickChart** (for financial data)
-
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/candlestickchart.png)
-
- - **BubbleChart** (area covered by bubbles indicates the value)
-
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/bubblechart.png)
-
- - **RadarChart** (spider web chart)
-
-![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/radarchart.png)
-
-
-Documentation
-=======
-Currently there's no need for documentation for the iOS/tvOS/macOS version, as the API is **95% the same** as on Android.  
-You can read the official [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) documentation here: [**Wiki**](https://github.com/PhilJay/MPAndroidChart/wiki)
-
-Or you can see the Charts Demo project in both Objective-C and Swift ([**ChartsDemo-iOS**](https://github.com/danielgindi/Charts/tree/master/ChartsDemo-iOS), as well as macOS [**ChartsDemo-macOS**](https://github.com/danielgindi/Charts/tree/master/ChartsDemo-macOS)) and learn the how-tos from it.
-
-
-Special Thanks
-=======
-
-Goes to [@liuxuan30](https://github.com/liuxuan30), [@petester42](https://github.com/petester42) and  [@AlBirdie](https://github.com/AlBirdie) for new features, bugfixes, and lots and lots of involvement in our open-sourced community! You guys are a huge help to all of those coming here with questions and issues, and I couldn't respond to all of those without you.
-
-### Our amazing sponsors
-
-[Debricked](https://debricked.com/): Use open source securely
-
-[![debricked](https://user-images.githubusercontent.com/4375169/73585544-25bfa800-44dd-11ea-9661-82519a125302.jpg)](https://debricked.com/)
-
-
-License
-=======
-Copyright 2016 Daniel Cohen Gindi & Philipp Jahoda
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.

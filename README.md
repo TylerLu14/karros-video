@@ -52,7 +52,7 @@ class ListViewModel: { }
   * And, `BaseViewController` consists a view model of type `BaseViewModel`
   * The only job left is to subclass and reuse. I can forget about tableView and collectionView delegates.
  
- ### Other Patters:
+ ### Other Patterns:
  * Singletons for shared resources: Scheduler, DependencyManager
  * Factory to manage fonts
 
@@ -60,7 +60,7 @@ class ListViewModel: { }
 * Since, I am using MVVM. This pattern works well with Reactive-Programming style.
 * RxSwift and RxCocoa helps with data binding
 * RxDataSource helps with collection binding
-* Action handles API calls, disables UIControl on while executing, return errors and maintains observable sreams
+* Action handles API calls, disables UIControl on while executing, return errors and maintains observable streams
 
 ## Some Best Practises:
 ### Network Layer:
